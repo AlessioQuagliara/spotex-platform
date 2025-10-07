@@ -1,0 +1,282 @@
+// This is your Prisma schema file
+// Learn more: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-arm64-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== TENANTS ====================
+
+model Tenant {
+  id                String   @id @default(uuid())
+  name              String
+  domain            String   @unique // subdomain.spotexsrl.com
+  parentTenantId    String?  @map("parent_tenant_id")
+  tier              String   @default("starter") // starter, business, enterprise
+  status            String   @default("trial") // active, suspended, trial, cancelled
+  whiteLabelConfig  Json     @map("white_label_config") @default("{}")
+  limits            Json     @default("{}")
+  trialEndsAt       DateTime? @map("trial_ends_at")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  parentTenant      Tenant?   @relation("TenantHierarchy", fields: [parentTenantId], references: [id], onDelete: SetNull)
+  childTenants      Tenant[]  @relation("TenantHierarchy")
+  users             User[]
+  sites             WordPressSite[]
+  tickets           Ticket[]
+  domains           Domain[]
+  notifications     Notification[]
+  auditLogs         AuditLog[]
+  payments          Payment[]
+  subscriptions     Subscription[]
+
+  @@map("tenants")
+  @@index([domain])
+  @@index([parentTenantId])
+}
+
+// ==================== USERS ====================
+
+model User {
+  id            String   @id @default(uuid())
+  tenantId      String   @map("tenant_id")
+  email         String
+  passwordHash  String   @map("password_hash")
+  firstName     String   @map("first_name")
+  lastName      String   @map("last_name")
+  role          String   // super_admin, agency_admin, agency_user, client_admin, client_user
+  status        String   @default("active") // active, inactive, invited
+  permissions   Json     @default("[]")
+  avatar        String?
+  phone         String?
+  lastLoginAt   DateTime? @map("last_login_at")
+  invitedBy     String?  @map("invited_by")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  tenant                Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdTickets        Ticket[] @relation("CreatedTickets")
+  assignedTickets       Ticket[] @relation("AssignedTickets")
+  ticketMessages        TicketMessage[]
+  auditLogs             AuditLog[]
+  notifications         Notification[]
+
+  @@unique([tenantId, email])
+  @@map("users")
+  @@index([tenantId])
+  @@index([email])
+}
+
+// ==================== WORDPRESS SITES ====================
+
+model WordPressSite {
+  id                String   @id @default(uuid())
+  tenantId          String   @map("tenant_id")
+  name              String
+  domain            String
+  status            String   @default("deploying") // deploying, active, suspended, error, deleting
+  wordpressVersion  String   @map("wordpress_version") @default("latest")
+  phpVersion        String   @map("php_version") @default("8.1")
+  serverDetails     Json     @map("server_details") @default("{}")
+  adminUrl          String?  @map("admin_url")
+  adminUsername     String?  @map("admin_username")
+  adminEmail        String?  @map("admin_email")
+  deployedAt        DateTime? @map("deployed_at")
+  lastBackupAt      DateTime? @map("last_backup_at")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tickets   Ticket[]
+  domains   Domain[]
+
+  @@map("wordpress_sites")
+  @@index([tenantId])
+  @@index([domain])
+}
+
+// ==================== TICKETS ====================
+
+model Ticket {
+  id                    String   @id @default(uuid())
+  tenantId              String   @map("tenant_id")
+  subject               String
+  description           String   @db.Text
+  status                String   @default("open") // open, in_progress, waiting_customer, resolved, closed
+  priority              String   @default("medium") // low, medium, high, critical
+  category              String   // technical, billing, feature_request, bug_report, general
+  createdBy             String   @map("created_by")
+  assignedTo            String?  @map("assigned_to")
+  wordPressSiteId       String?  @map("wordpress_site_id")
+  slaResponseDeadline   DateTime? @map("sla_response_deadline")
+  slaResolutionDeadline DateTime? @map("sla_resolution_deadline")
+  resolvedAt            DateTime? @map("resolved_at")
+  closedAt              DateTime? @map("closed_at")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  tenant        Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  creator       User            @relation("CreatedTickets", fields: [createdBy], references: [id])
+  assignee      User?           @relation("AssignedTickets", fields: [assignedTo], references: [id])
+  site          WordPressSite?  @relation(fields: [wordPressSiteId], references: [id], onDelete: SetNull)
+  messages      TicketMessage[]
+
+  @@map("tickets")
+  @@index([tenantId])
+  @@index([status])
+  @@index([createdBy])
+  @@index([assignedTo])
+}
+
+model TicketMessage {
+  id          String   @id @default(uuid())
+  tenantId    String   @map("tenant_id")
+  ticketId    String   @map("ticket_id")
+  userId      String   @map("user_id")
+  message     String   @db.Text
+  attachments Json     @default("[]")
+  isInternal  Boolean  @default(false) @map("is_internal")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@map("ticket_messages")
+  @@index([ticketId])
+  @@index([userId])
+}
+
+// ==================== DOMAINS ====================
+
+model Domain {
+  id                String   @id @default(uuid())
+  tenantId          String   @map("tenant_id")
+  name              String   // example.com
+  status            String   @default("pending") // pending, active, expired, transferring, error
+  sslStatus         String   @default("pending") @map("ssl_status") // pending, active, expired, error
+  wordPressSiteId   String?  @map("wordpress_site_id")
+  registrar         String?
+  registeredAt      DateTime? @map("registered_at")
+  expiresAt         DateTime? @map("expires_at")
+  autoRenew         Boolean  @default(true) @map("auto_renew")
+  nameservers       Json     @default("[]")
+  dnsRecords        Json     @default("[]") @map("dns_records")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  tenant Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  site   WordPressSite? @relation(fields: [wordPressSiteId], references: [id], onDelete: SetNull)
+
+  @@unique([tenantId, name])
+  @@map("domains")
+  @@index([tenantId])
+  @@index([status])
+}
+
+// ==================== NOTIFICATIONS ====================
+
+model Notification {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  type      String   // ticket_created, site_deployed, domain_expiring, etc.
+  title     String
+  message   String   @db.Text
+  userId    String?  @map("user_id") // null = send to all tenant admins
+  channels  Json     @default("[]") // email, sms, in_app, webhook
+  readAt    DateTime? @map("read_at")
+  sentAt    DateTime? @map("sent_at")
+  metadata  Json     @default("{}")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User?  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+  @@index([tenantId])
+  @@index([userId])
+  @@index([type])
+}
+
+// ==================== AUDIT LOGS ====================
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  tenantId   String   @map("tenant_id")
+  userId     String   @map("user_id")
+  action     String   // create, update, delete, login, logout, deploy, suspend
+  entityType String   @map("entity_type") // User, Site, Domain, etc.
+  entityId   String   @map("entity_id")
+  changes    Json     @default("{}")
+  ipAddress  String?  @map("ip_address")
+  userAgent  String?  @map("user_agent")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  // Relations
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@map("audit_logs")
+  @@index([tenantId])
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+// ==================== PAYMENTS & SUBSCRIPTIONS ====================
+
+model Payment {
+  id            String   @id @default(uuid())
+  tenantId      String   @map("tenant_id")
+  amount        Float
+  currency      String   @default("EUR")
+  status        String   // pending, completed, failed, refunded
+  paymentMethod String?  @map("payment_method")
+  transactionId String?  @map("transaction_id")
+  invoiceUrl    String?  @map("invoice_url")
+  paidAt        DateTime? @map("paid_at")
+  refundedAt    DateTime? @map("refunded_at")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+  @@index([tenantId])
+  @@index([status])
+}
+
+model Subscription {
+  id                    String   @id @default(uuid())
+  tenantId              String   @map("tenant_id") @unique
+  tier                  String   // starter, business, enterprise
+  status                String   // active, cancelled, past_due
+  currentPeriodStart    DateTime @map("current_period_start")
+  currentPeriodEnd      DateTime @map("current_period_end")
+  cancelAt              DateTime? @map("cancel_at")
+  stripeSubscriptionId  String?  @map("stripe_subscription_id") @unique
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
+  @@index([status])
+}

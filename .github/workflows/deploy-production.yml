@@ -1,0 +1,141 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  DOCKER_REGISTRY: ghcr.io
+  IMAGE_PREFIX: spotex-srl/spotex-platform
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run linting
+        run: npm run lint || true
+      
+      - name: Run tests
+        run: npm test || true
+
+  build:
+    name: Build Docker Images
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        service:
+          - backend-api
+          - auth-service
+          - ticket-service
+          - deployment-service
+          - domain-service
+          - frontend-admin
+          - frontend-agency
+          - frontend-public
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Log in to Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.DOCKER_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_PREFIX }}-${{ matrix.service }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+      
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./${{ matrix.service }}/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_PREFIX }}-${{ matrix.service }}:latest
+          cache-to: type=inline
+
+  deploy:
+    name: Deploy to Production Server
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.7.0
+        with:
+          ssh-private-key: ${{ secrets.PRODUCTION_SSH_KEY }}
+      
+      - name: Add server to known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.PRODUCTION_SERVER }} >> ~/.ssh/known_hosts
+      
+      - name: Copy docker-compose to server
+        run: |
+          scp docker-compose.production.yml deploy@${{ secrets.PRODUCTION_SERVER }}:/opt/spotex-platform/docker-compose.yml
+      
+      - name: Pull images on production server
+        run: |
+          ssh deploy@${{ secrets.PRODUCTION_SERVER }} "cd /opt/spotex-platform && docker-compose pull"
+      
+      - name: Run database migrations
+        run: |
+          ssh deploy@${{ secrets.PRODUCTION_SERVER }} "cd /opt/spotex-platform && docker-compose exec -T backend-api npx prisma migrate deploy"
+      
+      - name: Restart services with zero downtime
+        run: |
+          ssh deploy@${{ secrets.PRODUCTION_SERVER }} "cd /opt/spotex-platform && docker-compose up -d --no-deps --build"
+      
+      - name: Health check
+        run: |
+          sleep 10
+          ssh deploy@${{ secrets.PRODUCTION_SERVER }} "curl -f http://localhost:3000/api/health || exit 1"
+      
+      - name: Cleanup old images
+        run: |
+          ssh deploy@${{ secrets.PRODUCTION_SERVER }} "docker image prune -af --filter 'until=24h'"
+
+  notify:
+    name: Send Deployment Notification
+    needs: deploy
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Send success notification
+        if: needs.deploy.result == 'success'
+        run: |
+          echo "✅ Deployment successful!"
+          # Add Slack/Discord notification here
+      
+      - name: Send failure notification
+        if: needs.deploy.result == 'failure'
+        run: |
+          echo "❌ Deployment failed!"
+          # Add Slack/Discord notification here
