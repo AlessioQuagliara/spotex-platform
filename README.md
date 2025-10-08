@@ -843,7 +843,7 @@ Proprietario - © 2024 Spotex SRL
 
 ## 📞 Supporto
 
-- 📧 Email: support@spotexsrl.com
+- 📧 Email: info@spotexsrl.it
 - 🌐 Website: https://www.spotexsrl.com
 - 📱 Slack: [spotex-platform.slack.com](https://spotex-platform.slack.com)
 
