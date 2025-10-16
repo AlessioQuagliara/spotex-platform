@@ -10,7 +10,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-20+-green)](https://nodejs.org/)
 [![Database](https://img.shields.io/badge/Database-PostgreSQL%2015-blue)](https://www.postgresql.org/)
-[![Status](https://img.shields.io/badge/Status-Production%20Ready-success)](./FINAL_PRODUCTION_REPORT.md)
+[![Status](https://img.shields.io/badge/Status-Initial%20Setup-orange)](./FINAL_PRODUCTION_REPORT.md)
 
 </div>
 
@@ -37,13 +37,15 @@
 ### 📊 Status
 
 ```
-✅ Frontend Admin:      ██░░░░░░░░░░░░░░░░░░ 10% In Sviluppo
-✅ Frontend Agency:     ██░░░░░░░░░░░░░░░░░░ 10% In Sviluppo  
-✅ Backend Auth:        ██░░░░░░░░░░░░░░░░░░ 10% In Sviluppo
-✅ WordPress Deploy:    ██░░░░░░░░░░░░░░░░░░ 10% In Sviluppo
-✅ Multi-Tenant DB:     ██░░░░░░░░░░░░░░░░░░ 10% In Sviluppo
-✅ Docker Setup:        ██░░░░░░░░░░░░░░░░░░ 10% In Sviluppo
-🎯 Overall:             ██░░░░░░░░░░░░░░░░░░ 10% In fase di sviluppo
+🚧 Frontend Admin:      ░░░░░░░░░░░░░░░░░░░░ 0% Initial Setup
+🚧 Frontend Agency:     ░░░░░░░░░░░░░░░░░░░░ 0% Initial Setup
+🚧 Frontend Customers:  ░░░░░░░░░░░░░░░░░░░░ 0% Initial Setup
+🚧 Frontend Site:       ░░░░░░░░░░░░░░░░░░░░ 0% Initial Setup
+🚧 Backend API:         ░░░░░░░░░░░░░░░░░░░░ 0% Initial Setup
+🚧 WordPress Deploy:    ░░░░░░░░░░░░░░░░░░░░ 0% Initial Setup
+🚧 Multi-Tenant DB:     ░░░░░░░░░░░░░░░░░░░░ 0% Initial Setup
+🚧 Docker Setup:        ░░░░░░░░░░░░░░░░░░░░ 0% Initial Setup
+🎯 Overall:             ░░░░░░░░░░░░░░░░░░░░ 0% Restarted - Express Setup
 ```
 
 [📈 View Production Report](./FINAL_PRODUCTION_REPORT.md)
@@ -52,6 +54,7 @@
 
 - **Sito Pubblico**: `www.spotexsrl.com`
 - **Portale Agenzie**: `agency.spotexsrl.com`
+- **Portale Clienti**: `customers.spotexsrl.com`
 - **Admin Spotex**: `admin.spotexsrl.com`
 
 ### 🎯 Target
@@ -62,14 +65,15 @@
 
 ### 📦 Repository Contents
 
-Questo repository contiene il **sistema completo Spotex Platform**:
+Questo repository contiene il **sistema completo Spotex Platform** basato su **Express.js**:
 
-- **Frontend Admin** (`frontend-admin/`): Dashboard di amministrazione Spotex
-- **Frontend Agency** (`frontend-agency/`): Portale white-label per agenzie
-- **Auth Service** (`auth-service/`): Autenticazione JWT multi-tenant
-- **Deployment Service** (`deployment-service/`): Deploy WordPress con Kamatera API
-- **Shared Libraries** (`shared/`): Codice comune e configurazioni
-- **Database Schema** (`shared/prisma/`): Schema multi-tenant PostgreSQL
+- **Backend** (`backend/`): API REST con Express + TypeScript
+- **Frontend Agency** (`frontend/agency/`): Dashboard agenzie con Express
+- **Frontend Customers** (`frontend/customers/`): Portale clienti con Express
+- **Frontend Admin** (`frontend/spotex-admin/`): Admin Spotex con Express
+- **Frontend Site** (`frontend/spotex-site/`): Sito pubblico con Express
+- **Shared Libraries** (`shared/`): Codice comune e componenti
+- **Database Schema** (`backend/prisma/`): Schema multi-tenant PostgreSQL
 - **Docker Setup**: Containerizzazione completa per produzione
 
 ---
@@ -109,11 +113,11 @@ npm run dev
 
 Once running, access:
 
-- **Frontend Admin**: http://localhost:5173
-- **Frontend Agency**: http://localhost:5174
-- **Frontend Public**: http://localhost:3000
 - **Backend API**: http://localhost:3000/api
-- **Auth Service**: http://localhost:3001
+- **Frontend Site**: http://localhost:3001
+- **Frontend Admin**: http://localhost:3002
+- **Frontend Agency**: http://localhost:3003
+- **Frontend Customers**: http://localhost:3004
 - **Database**: postgresql://spotex:spotex_dev_password@localhost:5432/spotex_platform
 
 ---
@@ -201,36 +205,41 @@ docker-compose exec postgres psql -U spotex -d spotex_platform -f /tmp/seed.sql
 
 ## 🏗️ Architettura
 
-### Microservizi Containerizzati
+### Express.js Monorepo Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                       NGINX Reverse Proxy                    │
-│          (www / agency / admin .spotexsrl.com)              │
+│          (www / agency / customers / admin .spotexsrl.com)  │
 └───────────────────┬─────────────────────────────────────────┘
                     │
         ┌───────────┴───────────┐
         │                       │
 ┌───────▼───────┐      ┌───────▼────────┐
 │   FRONTENDS   │      │   BACKEND API  │
-│               │      │   (Gateway)    │
-│ • Public      │      └────────┬───────┘
-│ • Agency      │               │
-│ • Admin       │      ┌────────┴────────────┐
+│   (Express)   │      │   (Express)    │
+│               │      └────────┬───────┘
+│ • Admin       │               │
+│ • Agency      │      ┌────────┴────────────┐
+│ • Customers   │      │                     │
+│ • Site        │      │                     │
 └───────────────┘      │                     │
                 ┌──────▼──────┐    ┌────────▼─────────┐
-                │ Auth Service │    │ Ticket Service   │
+                │   Services   │    │   Database      │
+                │  (Prisma)    │    │  (PostgreSQL)   │
                 └──────┬──────┘    └────────┬─────────┘
                        │                     │
               ┌────────▼────────┐  ┌────────▼─────────┐
-              │ Domain Service  │  │Deployment Service│
+              │   Business      │  │   Multi-Tenant   │
+              │   Logic         │  │   Schema         │
               └────────┬────────┘  └────────┬─────────┘
                        │                     │
-              ┌────────▼───────────────────┬─┘
-              │                            │
-      ┌───────▼────────┐         ┌────────▼──────────┐
-      │   PostgreSQL   │         │ Notification Svc  │
-      │  (Multi-Tenant)│         └───────────────────┘
+              ┌────────▼─────────────────────┘
+              │
+      ┌───────▼────────┐
+      │   Shared Code  │
+      │   (Types, Utils│
+      │    Components) │
       └────────────────┘
 ```
 
@@ -239,7 +248,7 @@ docker-compose exec postgres psql -U spotex -d spotex_platform -f /tmp/seed.sql
 - ✅ **DRY (Don't Repeat Yourself)**: Zero duplicazione di logica business
 - ✅ **KISS (Keep It Simple, Stupid)**: Ogni componente fa una cosa sola
 - ✅ **Multi-Tenant**: Isolamento completo tra tenant con gerarchia
-- ✅ **Microservizi**: Servizi indipendenti ma codice condiviso
+- ✅ **Monorepo Express**: Servizi Express unificati con codice condiviso
 - ✅ **Type-Safe**: TypeScript end-to-end
 
 ---
@@ -258,15 +267,15 @@ docker-compose exec postgres psql -U spotex -d spotex_platform -f /tmp/seed.sql
 | **Redis** | Cache & Sessioni | 7 |
 | **JWT** | Authentication | 9.0 |
 
-### Frontend (Coming Soon)
+### Frontend (Express Services)
 
 | Tecnologia | Uso | Versione |
 |------------|-----|----------|
-| **React** | UI Library | 18 |
+| **Express** | Web Framework | 4.18 |
+| **EJS** | Template Engine | 3.1 |
 | **TypeScript** | Linguaggio | 5.3+ |
 | **Tailwind CSS** | Styling | 3.4 |
-| **React Query** | Data Fetching | 5.0 |
-| **React Router** | Routing | 6.20 |
+| **HTMX** | Interattività | 1.9 |
 
 ### Infrastructure
 
@@ -342,12 +351,11 @@ npm run db:migrate
 
 | Servizio | URL | Porta |
 |----------|-----|-------|
-| **API Gateway** | http://localhost:3000 | 3000 |
-| **Auth Service** | http://localhost:3001 | 3001 |
-| **Ticket Service** | http://localhost:3002 | 3002 |
-| **Frontend Public** | http://localhost:5173 | 5173 |
-| **Frontend Agency** | http://localhost:5174 | 5174 |
-| **Frontend Admin** | http://localhost:5175 | 5175 |
+| **Backend API** | http://localhost:3000 | 3000 |
+| **Frontend Admin** | http://localhost:3001 | 3001 |
+| **Frontend Agency** | http://localhost:3002 | 3002 |
+| **Frontend Customers** | http://localhost:3003 | 3003 |
+| **Frontend Site** | http://localhost:3004 | 3004 |
 | **Prisma Studio** | http://localhost:5555 | 5555 |
 
 ---
@@ -442,9 +450,9 @@ spotex-platform/
 ├── 🌐 domain-service/             # Gestione Domini & SSL
 ├── 🔔 notification-service/       # Notifiche Multi-Canale
 │
-├── 📱 frontend-public/            # Sito Marketing
-├── 🏢 frontend-agency/            # Dashboard Agenzie
-├── ⚙️ frontend-admin/             # Admin Spotex
+├── 📱 frontend-public/            # Servizio Express per Sito Marketing
+├── 🏢 frontend-agency/            # Servizio Express per Dashboard Agenzie
+├── ⚙️ frontend-admin/             # Servizio Express per Admin Spotex
 │
 ├── 🌐 nginx/                      # Reverse Proxy
 │   ├── nginx.conf
