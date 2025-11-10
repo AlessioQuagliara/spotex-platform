@@ -1,0 +1,1 @@
+# File per validazione richieste/risposte API

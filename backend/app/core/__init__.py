@@ -1,0 +1,1 @@
+# File per configurazioni e impostazioni core dell'applicazione
