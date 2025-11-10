@@ -7,9 +7,10 @@
 [![GitHub](https://img.shields.io/badge/GitHub-Repository-black)](https://github.com/AlessioQuagliara/spotex-platform)
 [![Built with DRY](https://img.shields.io/badge/Built%20with-DRY-blue)](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself)
 [![Follows KISS](https://img.shields.io/badge/Follows-KISS-green)](https://en.wikipedia.org/wiki/KISS_principle)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue)](https://www.typescriptlang.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-20+-green)](https://nodejs.org/)
-[![Database](https://img.shields.io/badge/Database-PostgreSQL%2015-blue)](https://www.postgresql.org/)
+[![Python](https://img.shields.io/badge/Python-3.11+-blue)](https://python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green)](https://fastapi.tiangolo.com/)
+[![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-2.0+-red)](https://sqlalchemy.org/)
+[![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL%2015-blue)](https://www.postgresql.org/)
 [![Status](https://img.shields.io/badge/Status-Initial%20Setup-orange)](./FINAL_PRODUCTION_REPORT.md)
 
 </div>
@@ -32,7 +33,7 @@
 
 ## 🎯 Panoramica
 
-**Spotex Platform** trasforma Spotex SRL da web agency tradizionale a **Cloud Solution Provider** completo, offrendo alle agenzie marketing una piattaforma white-label per gestire i propri clienti.
+Piattaforma **Cloud Solution Provider** completa, offre alle agenzie marketing una piattaforma white-label per gestire i propri clienti.
 
 ### 📊 Status
 
@@ -41,11 +42,11 @@
 🚧 Frontend Agency:     ░░░░░░░░░░░░░░░░░░░░ 0% Initial Setup
 🚧 Frontend Customers:  ████████░░░░░░░░░░░ 40% Auth System Complete
 🚧 Frontend Site:       ░░░░░░░░░░░░░░░░░░░░ 0% Initial Setup
-🚧 Backend API:         ████████░░░░░░░░░░░ 40% Auth System Complete
+🚧 Backend API:         ████████░░░░░░░░░░░ 40% FastAPI Structure Complete
 🚧 WordPress Deploy:    ░░░░░░░░░░░░░░░░░░░░ 0% Initial Setup
 🚧 Multi-Tenant DB:     ░░░░░░░░░░░░░░░░░░░░ 0% Initial Setup
 🚧 Docker Setup:        ░░░░░░░░░░░░░░░░░░░░ 0% Initial Setup
-🎯 Overall:             ████░░░░░░░░░░░░░░░ 20% Authentication System Implemented
+🎯 Overall:             ████░░░░░░░░░░░░░░░ 20% FastAPI Backend Implemented
 ```
 
 [📈 View Production Report](./FINAL_PRODUCTION_REPORT.md)
@@ -65,15 +66,15 @@
 
 ### 📦 Repository Contents
 
-Questo repository contiene il **sistema completo Spotex Platform** basato su **Express.js**:
+Questo repository contiene il **sistema completo Spotex Platform** basato su **FastAPI + Python**:
 
-- **Backend** (`backend/`): API REST con Express + TypeScript + **Sistema Autenticazione Completo**
+- **Backend** (`backend/`): API REST con FastAPI + Python + **Sistema Autenticazione Completo**
 - **Frontend Agency** (`frontend/agency/`): Dashboard agenzie con Express
 - **Frontend Customers** (`frontend/customers/`): **Portale clienti con autenticazione role-based (AGENCY/COMPANY)**
 - **Frontend Admin** (`frontend/spotex-admin/`): Admin Spotex con Express
 - **Frontend Site** (`frontend/spotex-site/`): Sito pubblico con Express
 - **Shared Libraries** (`shared/`): Codice comune e componenti
-- **Database Schema** (`backend/prisma/`): Schema multi-tenant PostgreSQL + **Email Tokens**
+- **Database Schema** (`backend/alembic/`): Migrations SQLAlchemy PostgreSQL
 - **Docker Setup**: Containerizzazione completa per produzione
 
 ---
@@ -82,9 +83,9 @@ Questo repository contiene il **sistema completo Spotex Platform** basato su **E
 
 ### Prerequisites
 
-- Node.js 18+
+- Python 3.11+
 - Docker & Docker Compose
-- npm or yarn
+- pip or poetry
 
 ### 🚀 Launch Everything
 
@@ -93,149 +94,37 @@ Questo repository contiene il **sistema completo Spotex Platform** basato su **E
 git clone https://github.com/AlessioQuagliara/spotex-platform.git
 cd spotex-platform
 
-# Install dependencies
-npm install
+# Install Python dependencies
+cd backend
+pip install -r requirements.txt
 
 # Start infrastructure (PostgreSQL + Redis)
 docker-compose up -d postgres redis
 
-# Wait for database to be ready (10 seconds)
-sleep 10
+# Run database migrations
+alembic upgrade head
 
-# Verify database health
-./scripts/db-health-check.sh
-
-# Start all services
-npm run dev
+# Start FastAPI server
+fastapi dev app/main.py
 ```
 
 ### 🌐 Access Points
 
 Once running, access:
 
-- **Backend API**: http://localhost:3000/api
+- **Backend API**: http://localhost:8000/api/v1
 - **Frontend Site**: http://localhost:3001
 - **Frontend Admin**: http://localhost:3002
 - **Frontend Agency**: http://localhost:3003
 - **Frontend Customers**: http://localhost:3004
 - **Database**: postgresql://spotex:spotex_dev_password@localhost:5432/spotex_platform
-
----
-
-## 🧪 Test Accounts
-
-The database comes pre-seeded with test accounts:
-
-### Super Admin (Spotex Platform)
-```
-Email: admin@spotex.local
-Password: admin123
-Role: super_admin
-Access: Full platform management
-```
-
-### Agency Owner #1 (Web Agency Italia)
-```
-Email: owner@webagency1.com
-Password: agency123
-Role: agency_owner
-Access: Manage clients, sites, tickets, billing
-```
-
-### Agency Owner #2 (Digital Studio Europe)
-```
-Email: owner@digitalstudio.eu
-Password: agency456
-Role: agency_owner
-Access: Manage clients, sites, tickets, billing
-```
-
-### Client User
-```
-Email: cliente1@example.com
-Password: client123
-Role: client
-Access: View own sites, create tickets
-```
-
-### Authentication Test Users
-```
-# Test Password Recovery
-Email: password-test@example.com (creato dinamicamente)
-Email: fulltest@example.com (creato dinamicamente)
-Password: newsecurepass123 (dopo reset)
-```
-
----
-
-## 🧪 Testing Suite
-
-### Initial Setup (Already Done ✅)
-
-The database is pre-configured with:
-- ✅ 11 tables with complete schema
-- ✅ 37 indexes for optimization
-- ✅ 18 test records (tenants, users, sites, tickets, etc.)
-- ✅ Multi-tenant isolation with `tenant_id`
-
-### Database Commands
-
-```bash
-# Check database health
-./scripts/db-health-check.sh
-
-# Connect to database
-docker-compose exec postgres psql -U spotex -d spotex_platform
-
-# View all tables
-docker-compose exec postgres psql -U spotex -d spotex_platform -c "\dt"
-
-# Backup database
-docker-compose exec postgres pg_dump -U spotex spotex_platform > backup.sql
-```
-
-### Reset Database (⚠️ Deletes all data!)
-
-```bash
-docker-compose down
-docker volume rm central-server_postgres_data
-docker-compose up -d postgres redis
-sleep 10
-docker cp shared/migration.sql spotex-postgres:/tmp/
-docker-compose exec postgres psql -U spotex -d spotex_platform -f /tmp/migration.sql
-docker cp shared/prisma/seed.sql spotex-postgres:/tmp/
-docker-compose exec postgres psql -U spotex -d spotex_platform -f /tmp/seed.sql
-```
-
-[📚 Full Database Guide](./DATABASE-INITIALIZATION-REPORT.md) | [🔧 Quick Reference](./QUICK-REFERENCE.md)
-
-### Authentication Tests
-
-#### Password Recovery Test
-```bash
-cd test && ./test-password-recovery.sh
-```
-**Cosa testa:**
-- Registrazione utente di test
-- Richiesta reset password
-- Generazione token sicura
-- Validazione token backend
-
-#### Role-Based Authentication Test
-```bash
-cd test && ./test-roles.sh
-```
-**Cosa testa:**
-- Login AGENCY vs COMPANY users
-- JWT token con role information
-- Protected routes access control
-- Dashboard separation
+- **API Documentation**: http://localhost:8000/docs
 
 ---
 
 ## 🏗️ Architettura
 
-### Express.js Monorepo Architecture
+### FastAPI Monorepo Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -247,7 +136,7 @@ cd test && ./test-roles.sh
         │                       │
 ┌───────▼───────┐      ┌───────▼────────┐
 │   FRONTENDS   │      │   BACKEND API  │
-│   (Express)   │      │   (Express)    │
+│   (Express)   │      │   (FastAPI)    │
 │               │      └────────┬───────┘
 │ • Admin       │               │
 │ • Agency      │      ┌────────┴────────────┐
@@ -256,7 +145,7 @@ cd test && ./test-roles.sh
 └───────────────┘      │                     │
                 ┌──────▼──────┐    ┌────────▼─────────┐
                 │   Services   │    │   Database      │
-                │  (Prisma)    │    │  (PostgreSQL)   │
+                │  (Python)    │    │  (PostgreSQL)   │
                 └──────┬──────┘    └────────┬─────────┘
                        │                     │
               ┌────────▼────────┐  ┌────────▼─────────┐
@@ -273,14 +162,6 @@ cd test && ./test-roles.sh
       └────────────────┘
 ```
 
-### Principi Architetturali
-
-- ✅ **DRY (Don't Repeat Yourself)**: Zero duplicazione di logica business
-- ✅ **KISS (Keep It Simple, Stupid)**: Ogni componente fa una cosa sola
-- ✅ **Multi-Tenant**: Isolamento completo tra tenant con gerarchia
-- ✅ **Monorepo Express**: Servizi Express unificati con codice condiviso
-- ✅ **Type-Safe**: TypeScript end-to-end
-
 ---
 
 ## 🛠️ Stack Tecnologico
@@ -289,13 +170,13 @@ cd test && ./test-roles.sh
 
 | Tecnologia | Uso | Versione |
 |------------|-----|----------|
-| **Node.js** | Runtime | 18+ |
-| **TypeScript** | Linguaggio | 5.3+ |
-| **Express** | Web Framework | 4.18 |
-| **Prisma** | ORM | 5.8 |
+| **Python** | Runtime | 3.11+ |
+| **FastAPI** | Web Framework | 0.104+ |
+| **SQLAlchemy** | ORM | 2.0+ |
+| **Alembic** | Migrations | 1.12+ |
 | **PostgreSQL** | Database | 15 |
 | **Redis** | Cache & Sessioni | 7 |
-| **JWT** | Authentication | 9.0 |
+| **Pydantic** | Data Validation | 2.5+ |
 
 ### Frontend (Express Services)
 
@@ -317,133 +198,6 @@ cd test && ./test-roles.sh
 
 ---
 
-## 🚀 Quick Start
-
-### Prerequisiti
-
-- Node.js 18+
-- Docker & Docker Compose
-- Git
-
-### 1️⃣ Clone del Repository
-
-```bash
-git clone https://github.com/spotex-srl/central-server.git
-cd central-server
-```
-
-### 2️⃣ Configurazione Environment
-
-```bash
-# Copia il file di esempio
-cp .env.example .env
-
-# Modifica le variabili d'ambiente
-nano .env
-```
-
-**Variabili Obbligatorie:**
-
-```bash
-# Database
-DB_PASSWORD=your_secure_password
-
-# JWT
-JWT_SECRET=your_super_secret_jwt_key
-
-# SMTP (per notifiche)
-SMTP_HOST=smtp.gmail.com
-SMTP_USER=your_email@gmail.com
-SMTP_PASSWORD=your_app_password
-```
-
-### 3️⃣ Avvio con Docker
-
-```bash
-# Avvia tutti i servizi
-npm run dev
-
-# O con build
-npm run dev:build
-```
-
-### 4️⃣ Inizializza Database
-
-```bash
-# Genera Prisma Client
-npm run db:generate
-
-# Esegui migrazioni
-npm run db:migrate
-```
-
-### 5️⃣ Accedi ai Servizi
-
-| Servizio | URL | Porta |
-|----------|-----|-------|
-| **Backend API** | http://localhost:3000 | 3000 |
-| **Frontend Admin** | http://localhost:3001 | 3001 |
-| **Frontend Agency** | http://localhost:3002 | 3002 |
-| **Frontend Customers** | http://localhost:3003 | 3003 |
-| **Frontend Site** | http://localhost:3004 | 3004 |
-| **Prisma Studio** | http://localhost:5555 | 5555 |
-
----
-
-## 🧪 Test Suite
-
-La piattaforma include una suite completa di test automatici per verificare qualità e compliance.
-
-### Test Rapidi
-
-```bash
-# Test DRY Compliance (verifica duplicazioni)
-node scripts/check-dry-compliance.js
-
-# Test KISS Compliance (verifica semplicità)
-node scripts/check-kiss-compliance.js
-
-# Test API (richiede servizi running)
-./scripts/test-api.sh
-```
-
-### Test Completo
-
-```bash
-# Esegue TUTTI i test e genera report
-./scripts/run-all-tests.sh
-```
-
-**Output Test Suite:**
-- ✅ Build & Compilation Check
-- ✅ DRY Principle Compliance
-- ✅ KISS Principle Compliance
-- ✅ Code Quality Metrics
-- ✅ Security Audit
-- ✅ Database Schema Validation
-
-**Report Generati:**
-- `./test-results/full-report-[timestamp].txt` - Report completo
-- `TEST-REPORT.md` - Documentazione dettagliata test
-- `EXECUTIVE-SUMMARY.md` - Sommario esecutivo
-
-### Current Test Results
-
-```
-✅ DRY Compliance:      100% (23/23 checks)
-✅ KISS Compliance:      93% (27/29 checks)
-✅ Build Success:       100% (All services)
-✅ Type Safety:         100% (No TS errors)
-✅ Auth System:         100% (Registration/Login/Password Recovery)
-✅ Overall Score:        95% (11/11 tests)
-
-Status: AUTHENTICATION SYSTEM COMPLETE ✅
-```
-
----
-
----
-
 ## 📁 Struttura del Progetto
 
 ```
@@ -455,31 +209,75 @@ spotex-platform/
 │   │   │   ├── core.ts            # Tenant, User, Site, Ticket, Domain
 │   │   │   ├── api.ts             # ApiResponse, Pagination
 │   │   │   ├── dto.ts             # Data Transfer Objects
-│   │   │   └── auth.ts            # JWT, Permissions
+│   │   │   ├── auth.ts            # JWT, Permissions
 │   │   ├── services/              # Business Logic Condivisa
 │   │   │   ├── BaseService.ts     # Service astratto (DRY)
 │   │   │   ├── TenantService.ts   # Gestione tenant
-│   │   │   └── TicketService.ts   # Gestione ticket
-│   │   ├── utils/                 # Utility functions
-│   │   │   ├── helpers.ts         # String, Date, Validation
-│   │   │   └── logger.ts          # Logging unificato
-│   │   └── config/                # Configurazioni centralizzate
-│   │       └── index.ts           # Env vars, CORS, Rate Limit
+│   │   └── utils/                 # Utility functions
+│   │       ├── helpers.ts         # String, Date, Validation
+│   │       └── logger.ts          # Logging unificato
 │   └── prisma/
 │       └── schema.prisma          # Database schema unificato
 │
-├── 🔗 backend-api/                # API Gateway Centrale
-│   ├── src/
-│   │   ├── middleware/            # Auth, ErrorHandler, Validation
-│   │   ├── routes/                # Tenant, User, Site, Ticket, Domain
-│   │   └── index.ts               # Express app
-│   └── Dockerfile
-│
-├── 🔐 auth-service/               # Servizio Autenticazione
-├── 🎫 ticket-service/             # Servizio Ticket
-├── 🚀 deployment-service/         # Auto-deploy WordPress
-├── 🌐 domain-service/             # Gestione Domini & SSL
-├── 🔔 notification-service/       # Notifiche Multi-Canale
+├── 🔗 backend/                     # API Gateway Centrale FastAPI
+│   ├── app/
+│   │   ├── main.py                # FastAPI app principale
+│   │   ├── config.py              # Configurazioni
+│   │   ├── database.py            # Connessione DB SQLAlchemy
+│   │   ├── core/
+│   │   │   ├── dependencies.py    # Dipendenze FastAPI
+│   │   │   ├── exceptions.py      # Gestione errori
+│   │   │   └── security.py        # JWT, hashing passwords
+│   │   ├── middleware/
+│   │   │   ├── rate_limit.py      # Rate limiting
+│   │   │   └── tenant_middleware.py # Isolamento tenant
+│   │   ├── models/                # Modelli SQLAlchemy
+│   │   │   ├── user.py            # Modello User
+│   │   │   ├── tenant.py          # Modello Tenant
+│   │   │   ├── website.py         # Modello Website
+│   │   │   ├── domain.py          # Modello Domain
+│   │   │   ├── database.py        # Modello Database
+│   │   │   ├── backup.py          # Modello Backup
+│   │   │   └── email.py           # Modello Email
+│   │   ├── routers/               # API Routes FastAPI
+│   │   │   ├── __init__.py        # Router principale
+│   │   │   └── v1/
+│   │   │       ├── auth.py         # Autenticazione (/api/v1/auth/*)
+│   │   │       ├── users.py        # Gestione utenti
+│   │   │       ├── tenants.py      # Gestione tenant
+│   │   │       ├── websites.py     # Gestione siti web
+│   │   │       ├── domains.py      # Gestione domini
+│   │   │       ├── databases.py    # Gestione database
+│   │   │       ├── backups.py      # Gestione backup
+│   │   │       ├── emails.py       # Gestione email
+│   │   │       └── monitoring.py   # Monitoraggio sistema
+│   │   ├── schemas/               # Pydantic Schemas
+│   │   │   ├── user.py            # Schemi User (request/response)
+│   │   │   ├── tenant.py          # Schemi Tenant
+│   │   │   ├── website.py         # Schemi Website
+│   │   │   ├── domain.py          # Schemi Domain
+│   │   │   ├── database.py        # Schemi Database
+│   │   │   ├── backup.py          # Schemi Backup
+│   │   │   └── email.py           # Schemi Email
+│   │   └── services/              # Business Logic Services
+│   │       ├── auth_service.py    # Servizio autenticazione
+│   │       ├── user_service.py    # Servizio utenti
+│   │       ├── tenant_service.py  # Servizio tenant
+│   │       └── ...               # Altri servizi
+│   ├── alembic/                   # Database Migrations
+│   │   ├── env.py
+│   │   └── versions/              # File migrazioni
+│   ├── tests/                     # Test Python
+│   │   ├── test_auth.py          # Test autenticazione
+│   │   ├── test_domains.py       # Test domini
+│   │   └── test_websites.py      # Test siti web
+│   ├── utils/                    # Utility Functions
+│   │   ├── docker_manager.py     # Gestione Docker
+│   │   ├── helpers.py            # Helper functions
+│   │   └── validators.py         # Validatori
+│   ├── requirements.txt          # Dipendenze Python
+│   ├── Dockerfile               # Container FastAPI
+│   └── docker-compose.yml       # Orchestrazione servizi
 │
 ├── 📱 frontend-public/            # Servizio Express per Sito Marketing
 ├── 🏢 frontend-agency/            # Servizio Express per Dashboard Agenzie
@@ -489,127 +287,55 @@ spotex-platform/
 │   ├── nginx.conf
 │   └── Dockerfile
 │
-├── 🐳 docker-compose.yml          # Orchestrazione servizi
-├── 📄 package.json                # Monorepo root
-├── 📘 tsconfig.json               # TypeScript config
+├── 🐳 docker-compose.yml          # Orchestrazione servizi globale
+├── 📄 package.json                # Monorepo root (npm workspaces)
+├── 📘 pyproject.toml              # Configurazione Python (opzionale)
 └── 📖 README.md                   # Questo file
 ```
 
-### 🌟 Shared Package - Il Cuore DRY
+### 🌟 Backend FastAPI - Architettura Pulita
 
-Il package `shared/` è il **cuore pulsante** della piattaforma:
+Il backend è strutturato secondo i principi **DRY & KISS**:
 
-- ✅ **Tipi**: Tutte le interfacce TypeScript definite una volta
-- ✅ **Services**: Logica business condivisa (BaseService pattern)
-- ✅ **Utils**: Funzioni helper riutilizzabili
-- ✅ **Config**: Configurazioni centralizzate
-- ✅ **Database**: Schema Prisma unificato
+- ✅ **Routers**: Ogni dominio ha il suo router API (`/api/v1/{domain}/*`)
+- ✅ **Models**: Modelli SQLAlchemy per ogni entità
+- ✅ **Schemas**: Validazione Pydantic per request/response
+- ✅ **Services**: Logica business isolata e testabile
+- ✅ **Middleware**: Cross-cutting concerns (auth, rate limiting, tenant isolation)
+- ✅ **Dependencies**: Injection delle dipendenze FastAPI
 
-**Ogni servizio importa da `@spotex/shared`** → Zero duplicazione!
+**Esempio struttura router:**
 
----
+```python
+# routers/v1/auth.py
+from fastapi import APIRouter, Depends
+from app.schemas.auth import LoginRequest, LoginResponse
+from app.services.auth_service import AuthService
+from app.core.dependencies import get_auth_service
 
-## 🎨 Principi di Design
+router = APIRouter()
 
-### 1. DRY (Don't Repeat Yourself)
-
-**Problema**: Codice duplicato è difficile da mantenere.
-
-**Soluzione**: 
-- `BaseService<T>` → Tutti i servizi ereditano CRUD operations
-- Shared types → Interfacce usate da tutti
-- Middleware unificato → `requireAuth()` usato ovunque
-
-**Esempio:**
-
-```typescript
-// ❌ SBAGLIATO: Duplicazione
-class UserService {
-  async findAll() { /* ... */ }
-  async findOne() { /* ... */ }
-  async create() { /* ... */ }
-}
-
-class TicketService {
-  async findAll() { /* ... */ }  // Codice duplicato!
-  async findOne() { /* ... */ }  // Codice duplicato!
-  async create() { /* ... */ }   // Codice duplicato!
-}
-
-// ✅ CORRETTO: DRY con BaseService
-class UserService extends BaseService<User> {
-  // Eredita automaticamente findAll, findOne, create, etc.
-}
-
-class TicketService extends BaseService<Ticket> {
-  // Eredita automaticamente findAll, findOne, create, etc.
-  
-  // Solo logica specifica ticket
-  async escalateTicket(id: string) { /* ... */ }
-}
-```
-
-### 2. KISS (Keep It Simple, Stupid)
-
-**Problema**: Codice complesso è difficile da capire.
-
-**Soluzione**:
-- Ogni funzione fa **una cosa sola**
-- Nomi auto-esplicativi
-- Massimo 3 livelli di nesting
-
-**Esempio:**
-
-```typescript
-// ❌ SBAGLIATO: Troppo complesso
-async function processTicket(ticket: Ticket, user: User, config: Config) {
-  if (ticket.priority === 'critical') {
-    if (config.enableEscalation) {
-      if (user.role === 'admin') {
-        // ... 50 righe di codice nested
-      }
-    }
-  }
-}
-
-// ✅ CORRETTO: KISS - Scomposto in funzioni semplici
-async function processTicket(ticket: Ticket) {
-  if (isCritical(ticket)) {
-    await handleCriticalTicket(ticket);
-  }
-}
-
-function isCritical(ticket: Ticket): boolean {
-  return ticket.priority === 'critical';
-}
-
-async function handleCriticalTicket(ticket: Ticket) {
-  await notifyAdmins(ticket);
-  await escalatePriority(ticket);
-}
-```
-
-### 3. Multi-Tenant Isolation
-
-**Ogni query include `tenant_id`** per isolamento completo:
-
-```typescript
-// ✅ Automatico in BaseService
-async findAll(tenantId: string, filters?: any) {
-  return this.repository.find({
-    tenant_id: tenantId,  // ← Isolamento automatico
-    ...filters
-  });
-}
-
-// ❌ Impossibile accedere a dati di altri tenant
-const tickets = await ticketService.findAll('tenant-123');
-// Ritorna SOLO ticket di tenant-123
+@router.post("/login", response_model=LoginResponse)
+async def login(
+    request: LoginRequest,
+    auth_service: AuthService = Depends(get_auth_service)
+):
+    return await auth_service.login(request.email, request.password)
 ```
 
 ---
 
 ## ⚡ Funzionalità
+
+### 🔐 Authentication & Security System
+
+- ✅ **Role-Based Authentication**: Supporto per AGENCY e COMPANY users
+- ✅ **JWT Token Management**: Sicurezza avanzata con token crittografati
+- ✅ **Email Verification**: Sistema di verifica email obbligatoria
+- ✅ **Password Recovery**: Reset password sicuro con token email
+- ✅ **Frontend Auth Pages**: Login, registrazione, recupero password
+- ✅ **Security Features**: bcrypt hashing, token expiration, input validation
+- ✅ **Multi-Role UI**: Dashboard separate per AGENCY/COMPANY users
 
 ### 🏢 Multi-Tenant White-Label
 
@@ -645,16 +371,6 @@ const tickets = await ticketService.findAll('tenant-123');
 - ✅ Template personalizzabili
 - ✅ Notifiche basate su eventi
 
-### 🔐 Authentication & Security System
-
-- ✅ **Role-Based Authentication**: Supporto per AGENCY e COMPANY users
-- ✅ **JWT Token Management**: Sicurezza avanzata con token crittografati
-- ✅ **Email Verification**: Sistema di verifica email obbligatoria
-- ✅ **Password Recovery**: Reset password sicuro con token email
-- ✅ **Frontend Auth Pages**: Login, registrazione, recupero password
-- ✅ **Security Features**: bcrypt hashing, token expiration, input validation
-- ✅ **Multi-Role UI**: Dashboard separate per AGENCY/COMPANY users
-
 ---
 
 ## 📡 API Documentation
@@ -662,12 +378,12 @@ const tickets = await ticketService.findAll('tenant-123');
 ### Base URL
 
 ```
-http://localhost:3000/api
+http://localhost:8000/api/v1
 ```
 
 ### Authentication
 
-Tutti gli endpoint richiedono JWT token:
+Tutte le API richiedono JWT token:
 
 ```bash
 Authorization: Bearer <your_jwt_token>
@@ -678,36 +394,35 @@ Authorization: Bearer <your_jwt_token>
 #### Authentication
 
 ```http
-POST   /api/auth/register               # Registrazione nuovo utente
-POST   /api/auth/login                  # Login con email/password
-POST   /api/auth/logout                 # Logout utente
-GET    /api/auth/me                     # Profilo utente autenticato
-POST   /api/auth/verify-email           # Verifica email con token
-POST   /api/auth/forgot-password        # Richiesta reset password
-POST   /api/auth/reset-password         # Reset password con token
-POST   /api/auth/verify-user-test       # Verifica utente (solo test)
+POST   /api/v1/auth/login               # Login con email/password
+POST   /api/v1/auth/register            # Registrazione nuovo utente
+POST   /api/v1/auth/logout              # Logout utente
+GET    /api/v1/auth/me                  # Profilo utente autenticato
+POST   /api/v1/auth/verify-email        # Verifica email con token
+POST   /api/v1/auth/forgot-password     # Richiesta reset password
+POST   /api/v1/auth/reset-password      # Reset password con token
 ```
 
 #### Tenants
 
 ```http
-GET    /api/tenants              # Lista tutti i tenant
-POST   /api/tenants              # Crea nuovo tenant
-GET    /api/tenants/:id          # Dettaglio tenant
-PUT    /api/tenants/:id          # Aggiorna tenant
-DELETE /api/tenants/:id          # Elimina tenant
-GET    /api/tenants/:id/stats    # Statistiche tenant
+GET    /api/v1/tenants              # Lista tutti i tenant
+POST   /api/v1/tenants              # Crea nuovo tenant
+GET    /api/v1/tenants/:id          # Dettaglio tenant
+PUT    /api/v1/tenants/:id          # Aggiorna tenant
+DELETE /api/v1/tenants/:id          # Elimina tenant
+GET    /api/v1/tenants/:id/stats    # Statistiche tenant
 ```
 
-#### Tickets
+#### Websites
 
 ```http
-GET    /api/tickets?tenantId=xxx           # Lista ticket
-POST   /api/tickets?tenantId=xxx           # Crea ticket
-GET    /api/tickets/:id?tenantId=xxx       # Dettaglio ticket
-PUT    /api/tickets/:id?tenantId=xxx       # Aggiorna ticket
-POST   /api/tickets/:id/escalate           # Escalation
-POST   /api/tickets/:id/assign             # Assegna
+GET    /api/v1/websites              # Lista siti web
+POST   /api/v1/websites              # Crea nuovo sito
+GET    /api/v1/websites/:id          # Dettaglio sito
+PUT    /api/v1/websites/:id          # Aggiorna sito
+DELETE /api/v1/websites/:id          # Elimina sito
+POST   /api/v1/websites/:id/deploy   # Deploy sito
 ```
 
 ### Response Format
@@ -718,11 +433,7 @@ Tutte le risposte seguono questo formato:
 {
   "success": boolean,
   "data": T | T[],
-  "error": {
-    "code": string,
-    "message": string,
-    "details": any
-  },
+  "message": string,
   "timestamp": string,
   "pagination": {  // Solo per liste
     "page": number,
@@ -735,79 +446,60 @@ Tutte le risposte seguono questo formato:
 
 ---
 
-## 🗄️ Database Schema
+## �️ Database Schema
 
-### Modelli Principali
+### Modelli SQLAlchemy Principali
 
-```sql
--- Tenants (Agenzie/Clienti)
-tenants
-├── id (uuid)
-├── name
-├── domain (unique)
-├── parent_tenant_id (self-reference)
-├── tier (starter|business|enterprise)
-├── white_label_config (json)
-└── limits (json)
+```python
+# User Model
+class User(Base):
+    __tablename__ = "users"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id"))
+    email = Column(String, unique=True, nullable=False)
+    password_hash = Column(String, nullable=False)
+    role = Column(Enum(UserRole), nullable=False)  # AGENCY, COMPANY, ADMIN
+    is_verified = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
 
--- Users (Multi-ruolo)
-users
-├── id (uuid)
-├── tenant_id (fk)
-├── email
-├── role (super_admin|agency_admin|agency_user|client_admin|client_user)
-└── permissions (json)
+# Tenant Model  
+class Tenant(Base):
+    __tablename__ = "tenants"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = Column(String, nullable=False)
+    domain = Column(String, unique=True)
+    parent_tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id"))
+    tier = Column(Enum(Tier), default=Tier.STARTER)
+    white_label_config = Column(JSON)
+    limits = Column(JSON)
+    created_at = Column(DateTime, default=datetime.utcnow)
 
--- Email Tokens (Recupero Password & Verifica)
-email_tokens
-├── id (uuid)
-├── user_id (fk)
-├── token (unique, hashed)
-├── type (EMAIL_VERIFICATION|PASSWORD_RESET)
-├── expires_at (datetime)
-├── used (boolean)
-└── created_at (datetime)
-
--- WordPress Sites
-wordpress_sites
-├── id (uuid)
-├── tenant_id (fk)
-├── name
-├── domain
-├── status (deploying|active|suspended|error)
-└── server_details (json)
-
--- Tickets
-tickets
-├── id (uuid)
-├── tenant_id (fk)
-├── subject
-├── status (open|in_progress|resolved|closed)
-├── priority (low|medium|high|critical)
-├── sla_response_deadline
-└── sla_resolution_deadline
-
--- Domains
-domains
-├── id (uuid)
-├── tenant_id (fk)
-├── name
-├── status (pending|active|expired)
-├── ssl_status (pending|active|expired)
-└── auto_renew
+# Website Model
+class Website(Base):
+    __tablename__ = "websites"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id"))
+    name = Column(String, nullable=False)
+    domain = Column(String, unique=True)
+    status = Column(Enum(WebsiteStatus), default=WebsiteStatus.DEPLOYING)
+    server_details = Column(JSON)
+    created_at = Column(DateTime, default=datetime.utcnow)
 ```
 
 ### Migrations
 
 ```bash
 # Crea nuova migration
-npm run db:migrate
+alembic revision --autogenerate -m "Add new table"
 
-# Reset database (⚠️ elimina tutti i dati)
-npx prisma migrate reset
+# Applica migrazioni
+alembic upgrade head
 
-# Apri Prisma Studio (GUI)
-npm run db:studio
+# Rollback
+alembic downgrade -1
 ```
 
 ---
@@ -817,26 +509,24 @@ npm run db:studio
 ### Development
 
 ```bash
-npm run dev
+cd backend
+fastapi dev app/main.py
 ```
 
 ### Production
 
 ```bash
 # Build tutti i servizi
-npm run build:all
-
-# Start production
 docker-compose -f docker-compose.prod.yml up -d
 ```
 
 ### Environment Variables (Production)
 
 ```bash
-NODE_ENV=production
 DATABASE_URL=postgresql://user:pass@host:5432/db
-JWT_SECRET=your_very_long_random_secret
-SMTP_HOST=smtp.provider.com
+SECRET_KEY=your_super_secret_key
+JWT_SECRET_KEY=your_jwt_secret
+SMTP_SERVER=smtp.gmail.com
 SMTP_USER=noreply@spotexsrl.com
 SMTP_PASSWORD=secret
 ```
@@ -846,14 +536,15 @@ SMTP_PASSWORD=secret
 ## 🧪 Testing
 
 ```bash
-# Run tutti i test
-npm test
+# Run tutti i test Python
+cd backend
+pytest
 
 # Test con coverage
-npm run test:coverage
+pytest --cov=app --cov-report=html
 
-# Test specifico servizio
-cd backend-api && npm test
+# Test specifico
+pytest tests/test_auth.py
 ```
 
 ---
@@ -863,21 +554,21 @@ cd backend-api && npm test
 ### Logs
 
 ```bash
-# Vedi logs di un servizio
-docker-compose logs -f backend-api
+# Vedi logs FastAPI
+docker-compose logs -f backend
 
-# Logs di tutti i servizi
-docker-compose logs -f
+# Logs strutturati con JSON
+fastapi run app/main.py --log-config log_config.json
 ```
 
 ### Health Checks
 
 ```bash
 # API Gateway
-curl http://localhost:3000/health
+curl http://localhost:8000/health
 
-# Auth Service
-curl http://localhost:3001/health
+# Database
+curl http://localhost:8000/api/v1/monitoring/health
 ```
 
 ---
@@ -894,13 +585,15 @@ curl http://localhost:3001/health
 ### Coding Standards
 
 - ✅ Segui principi **DRY & KISS**
-- ✅ TypeScript strict mode
+- ✅ Type hints Python completi
+- ✅ Pydantic per validazione dati
+- ✅ SQLAlchemy 2.0 style
+- ✅ Async/await per operazioni I/O
 - ✅ Test per nuove features
-- ✅ Documenta API changes
 
 ---
 
-## 📝 License
+## �📝 License
 
 Proprietario - © 2024 Spotex SRL
 
