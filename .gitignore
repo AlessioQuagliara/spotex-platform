@@ -1,6 +1,14 @@
 # Dependencies
 node_modules/
 **/node_modules/
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+# Python virtual environments
+venv/
+env/
+.venv/
 
 # Build outputs
 dist/
