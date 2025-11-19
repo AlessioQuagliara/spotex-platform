@@ -1,0 +1,109 @@
+# ========================================
+# 🐳 Docker Compose - PRODUCTION
+# ========================================
+# Usa: docker-compose -f docker-compose.prod.yml up -d
+# Per produzione con ottimizzazioni e sicurezza
+
+version: '3.8'
+
+services:
+  # ==================== PostgreSQL Database ====================
+  postgres:
+    image: postgres:15-alpine
+    container_name: spotex-postgres-prod
+    restart: always
+    environment:
+      POSTGRES_USER: spotex
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: spotex_platform
+    volumes:
+      - postgres_data_prod:/var/lib/postgresql/data
+    networks:
+      - spotex-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U spotex -d spotex_platform"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    # Non esponiamo la porta esterna in produzione per sicurezza
+    # Solo accessibile internamente dalla rete Docker
+
+  # ==================== Redis Cache ====================
+  redis:
+    image: redis:7-alpine
+    container_name: spotex-redis-prod
+    restart: always
+    volumes:
+      - redis_data_prod:/data
+    networks:
+      - spotex-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    # Non esponiamo la porta esterna in produzione
+
+  # ==================== Backend FastAPI ====================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: spotex-backend-prod
+    restart: always
+    environment:
+      - DATABASE_URL=postgresql://spotex:${DB_PASSWORD}@postgres:5432/spotex_platform
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-7d}
+      - ENV=production
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - spotex-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    # Non esponiamo porta 8000, sarà dietro nginx
+
+  # ==================== Nginx Reverse Proxy ====================
+  nginx:
+    image: nginx:alpine
+    container_name: spotex-nginx-prod
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - backend
+    networks:
+      - spotex-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+# ==================== Networks ====================
+networks:
+  spotex-network:
+    driver: bridge
+    name: spotex-prod-network
+
+# ==================== Volumes ====================
+volumes:
+  postgres_data_prod:
+    name: spotex-postgres-prod-data
+  redis_data_prod:
+    name: spotex-redis-prod-data

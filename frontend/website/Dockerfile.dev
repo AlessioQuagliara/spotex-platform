@@ -1,0 +1,19 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copy package files
+COPY ./website/package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy app code first
+COPY ./website .
+
+# Copy shared directory (this will overwrite any shared directory in website)
+COPY ./shared ./shared
+
+EXPOSE 3000
+
+CMD ["npx", "next", "dev", "--port", "3000", "--hostname", "0.0.0.0"]

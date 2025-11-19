@@ -1,0 +1,104 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: central-server-db
+    environment:
+      POSTGRES_USER: spotex
+      POSTGRES_PASSWORD: spotex_dev_password
+      POSTGRES_DB: central_server_dev
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U spotex"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # FastAPI Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: central-server-backend
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://spotex:spotex_dev_password@postgres:5432/central_server_dev
+      SECRET_KEY: OOOOOSTIAAAAA-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+      DEBUG: "True"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # Next.js Admin Frontend
+  admin:
+    build:
+      context: ./frontend/admin
+      dockerfile: Dockerfile.dev
+    container_name: central-server-admin
+    volumes:
+      - ./frontend/admin:/app
+      - /app/node_modules
+      - /app/.next
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
+    command: npm run dev
+
+  # Next.js Customer Portal
+  customer-portal:
+    build:
+      context: ./frontend/customer-portal
+      dockerfile: Dockerfile.dev
+    container_name: central-server-portal
+    volumes:
+      - ./frontend/customer-portal:/app
+      - /app/node_modules
+      - /app/.next
+    ports:
+      - "3001:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
+    command: npm run dev
+
+  # Next.js Website
+  website:
+    build:
+      context: ./frontend/website
+      dockerfile: Dockerfile.dev
+    container_name: central-server-website
+    volumes:
+      - ./frontend/website:/app
+      - /app/node_modules
+      - /app/.next
+    ports:
+      - "3002:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
+    command: npm run dev
+
+  # Nginx Reverse Proxy (optional in dev)
+  nginx:
+    image: nginx:alpine
+    container_name: central-server-nginx
+    volumes:
+      - ./nginx/nginx.dev.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+      - admin
+      - customer-portal
+      - website
+
+volumes:
+  postgres_data:

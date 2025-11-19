@@ -24,7 +24,7 @@ class UserBase(BaseModel):
 class UserCreate(BaseModel):
     name: str = Field(...,min_length=3, max_length=50, example="Alessio")
     surname: str = Field(...,min_length=3, max_length=50, example="Quagliara")
-    email : EmailStr = Field(..., example="quagliara.alessio@spotexsrl.com")
+    email : EmailStr = Field(..., example="alessio.quagliara@spotexsrl.com")
     password: str = Field(..., min_length=8)
     company: Optional[str] = Field(None, max_length=100, example="Spotex SRL")
     role: UserRole = UserRole.USER
@@ -34,7 +34,7 @@ class UserCreate(BaseModel):
 class UserUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=3, max_length=50, example="Alessio")
     surname: Optional[str] = Field(None, min_length=3, max_length=50, example="Quagliara")
-    email : Optional[EmailStr] = Field(None, example="quagliara.alessio@spotexsrl.com")
+    email : Optional[EmailStr] = Field(None, example="alessio.quagliara@spotexsrl.com")
     password: Optional[str] = Field(None, min_length=8)
     company: Optional[str] = Field(None, max_length=100, example="Spotex SRL")
     role: Optional[UserRole] = None
@@ -43,7 +43,7 @@ class UserUpdate(BaseModel):
 # Schema per la risposta dell'utente (Sperando che risponda)
 class UserResponse(BaseModel):
     id : int
-    email : EmailStr = Field(..., example="quagliara.alessio@spotexsrl.com")
+    email : EmailStr = Field(..., example="alessio.quagliara@spotexsrl.com")
     name : str
     surname : str
     company : Optional[str] = None

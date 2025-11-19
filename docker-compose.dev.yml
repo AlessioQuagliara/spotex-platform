@@ -1,0 +1,131 @@
+# ========================================
+# 🐳 Docker Compose - DEVELOPMENT
+# ========================================
+# Usa: docker-compose up -d
+# Per sviluppo locale con hot-reload
+
+services:
+  # ==================== PostgreSQL Database ====================
+  postgres:
+    image: postgres:15-alpine
+    container_name: spotex-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: spotex
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-spotex_dev_password}
+      POSTGRES_DB: spotex_platform
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+      - ./backend/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - spotex-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U spotex -d spotex_platform"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==================== Redis Cache ====================
+  redis:
+    image: redis:7-alpine
+    container_name: spotex-redis-dev
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data_dev:/data
+    networks:
+      - spotex-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==================== Backend FastAPI ====================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: spotex-backend-dev
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgresql://spotex:${DB_PASSWORD:-spotex_dev_password}@postgres:5432/spotex_platform
+      - JWT_SECRET=${JWT_SECRET}
+      - ENV=development
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/app:/app/app:ro  # Read-only per sicurezza
+      - ./backend/alembic:/app/alembic:ro
+      - ./backend/tests:/app/tests:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - spotex-network
+    command: fastapi dev app/main.py --host 0.0.0.0 --port 8000
+
+  # ==================== Frontend Admin ====================
+  frontend-admin:
+    build:
+      context: ./frontend
+      dockerfile: ./admin/Dockerfile.dev
+    container_name: spotex-frontend-admin-dev
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    networks:
+      - spotex-network
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - TURBOPACK=0
+
+  # ==================== Frontend Customer Portal ====================
+  frontend-customer-portal:
+    build:
+      context: ./frontend
+      dockerfile: ./customer-portal/Dockerfile.dev
+    container_name: spotex-frontend-customer-portal-dev
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    networks:
+      - spotex-network
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - TURBOPACK=0
+
+  # ==================== Frontend Website ====================
+  frontend-website:
+    build:
+      context: ./frontend
+      dockerfile: ./website/Dockerfile.dev
+    container_name: spotex-frontend-website-dev
+    restart: unless-stopped
+    ports:
+      - "3002:3000"
+    networks:
+      - spotex-network
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+
+# ==================== Networks ====================
+networks:
+  spotex-network:
+    driver: bridge
+    name: spotex-dev-network
+
+# ==================== Volumes ====================
+volumes:
+  postgres_data_dev:
+    name: spotex-postgres-dev-data
+  redis_data_dev:
+    name: spotex-redis-dev-data

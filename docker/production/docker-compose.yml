@@ -1,0 +1,88 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: central-server-db-prod
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  backend:
+    build:
+      context: ../../backend
+      dockerfile: ../docker/production/Dockerfile
+    container_name: central-server-backend-prod
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      SECRET_KEY: ${SECRET_KEY}
+      DEBUG: "False"
+    restart: unless-stopped
+    networks:
+      - app-network
+    depends_on:
+      - postgres
+
+  admin:
+    build:
+      context: ../../frontend/admin
+      dockerfile: Dockerfile.prod
+    container_name: central-server-admin-prod
+    environment:
+      NEXT_PUBLIC_API_URL: https://api.spotexsrl.com/api/v1
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  customer-portal:
+    build:
+      context: ../../frontend/customer-portal
+      dockerfile: Dockerfile.prod
+    container_name: central-server-portal-prod
+    environment:
+      NEXT_PUBLIC_API_URL: https://api.spotexsrl.com/api/v1
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  website:
+    build:
+      context: ../../frontend/website
+      dockerfile: Dockerfile.prod
+    container_name: central-server-website-prod
+    environment:
+      NEXT_PUBLIC_API_URL: https://api.spotexsrl.com/api/v1
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: central-server-nginx-prod
+    volumes:
+      - ../../nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../../nginx/ssl:/etc/nginx/ssl:ro
+    ports:
+      - "80:80"
+      - "443:443"
+    restart: unless-stopped
+    networks:
+      - app-network
+    depends_on:
+      - backend
+      - admin
+      - customer-portal
+      - website
+
+volumes:
+  postgres_prod_data:
+
+networks:
+  app-network:
+    driver: bridge

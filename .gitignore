@@ -49,6 +49,8 @@ coverage/
 
 # Docker
 docker-compose.override.yml
+*.sql
+!backend/init-db.sql
 
 # Temporary files
 *.tmp
@@ -59,3 +61,6 @@ docker-compose.override.yml
 *.db
 *.sqlite
 *.sqlite3
+
+# Backup files
+backup_*.sql
